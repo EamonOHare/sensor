@@ -4,7 +4,7 @@ from sensor import SHT20
 #write the data into data.txt
 file1 = open('data.txt', 'w')
 sht = SHT20(1, 0x40)
-for x in range(5)
+for x in range(5):
     h, t = sht.all()  # read both at once
     file1.writelines(h)
     file1.write("\n")
