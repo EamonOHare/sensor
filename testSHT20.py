@@ -8,7 +8,7 @@ for x in range(5):
     h, t = sht.all()  # read both at once
     file1.write(" ".join(str(s) for s in h))
     file1.write("\n")
-    file1.write(" ".join(str(s) for s in l))
+    file1.write(" ".join(str(s) for s in t))
     file1.write("\n")
 
 
