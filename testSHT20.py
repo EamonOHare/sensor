@@ -6,9 +6,9 @@ file1 = open('data.txt', 'w')
 sht = SHT20(1, 0x40)
 for x in range(5):
     h, t = sht.all()  # read both at once
-    file1.write(h)
+    file1.write(" ".join(h))
     file1.write("\n")
-    file1.write(l)
+    file1.write(" ".join(l))
     file1.write("\n")
 
 
