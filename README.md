@@ -1,180 +1,212 @@
-# Raspberry Pi Sensors
+## GreenPonik_PH.py Library for Raspberry pi
+---------------------------------------------------------
+This is the sample code for Gravity: Analog pH Sensor / Meter Kit V2, SKU:SEN0161-V2
+## Table of Contents
 
-This is a **Python 3** package that enables **Raspberry Pi** to read various
-sensors.
-
-Supported devices include:
-- **DS18B20** temperature sensor
-- **BMP180** pressure and temperature sensor
-- **HTU21D** humidity and temperature sensor
-- **SHT20** humidity and temperature sensor
-- **MCP3004** A/D Converter (**MCP3008** also compatible)
-
-The chief motivation for this package is educational. I am teaching a Raspberry
-Pi course, and find it very troublesome for students having to download a
-separate library every time they use another sensor. With this package, download
-once and they are set (for my course, anyway). I hope you find it useful, too.
+- [## GreenPonik_PH.py Library for Raspberry pi](#greenponikphpy-library-for-raspberry-pi)
+- [Table of Contents](#table-of-contents)
+- [Installation](#installation)
+- [Methods](#methods)
+- [Examples](#examples)
+- [Credits](#credits)
+<snippet>
+<content>
 
 ## Installation
 
-It is best to update Linux first.
+Dependencies:
 
-`sudo apt-get update`  
-`sudo apt-get dist-upgrade`
+The [Analog pH Sensor](https://wiki.dfrobot.com/Gravity__Analog_pH_Sensor_Meter_Kit_V2_SKU_SEN0161-V2) should work with ADS1115
+[DFRobot_ADS1115](https://github.com/DFRobot/DFRobot_ADS1115/tree/master/RaspberryPi/Python) 
 
-Install this package:
+Call modules:
 
-`sudo pip3 install sensor`
+```Python
 
-But the `sensor` package would not work by itself. Communicating with sensors
-often requires some sort of serial protocol, such as **1-wire**, **I2C**, or
-**SPI**. You have to know which sensor speaks which, and set up Raspberry Pi to
-do so.
+from DFRobot_ADS1115 import ADS1115
+from GreenPonik_PH import GreenPonik_PH
 
-## Enable 1-Wire, I2C, or SPI
-
-`sudo raspi-config`, enter **Interfacing Options**, enable the protocols you
-need.
-
-## Know your sensor's address
-
-Unlike many libraries out there, this library knows **no default bus number**
-and **no default device address**. I want learners to be explicitly aware of
-those numbers, even if they are fixed.
-
-For example:
-- **I2C** bus is numbered **1**
-- **SPI** bus is numbered **0**
-
-To find out individual sensor's address:
-- For 1-wire sensors, go to `/sys/bus/w1/devices/`
-- For I2C sensors, use `i2cdetect -y 1`
-- For SPI sensors, you should know which CS pin you use
-
-## My sensors don't give simple numbers
-
-Unlike many libraries out there, this library does not return a simple Celcius
-degree when reading temperatures, does not return a simple hPa value when
-reading pressure, does not return a simple RH% when reading humidity, etc.
-Instead, I return a **namedtuple** representing the quantity, which offers two
-benefits:
-
-- No more conversion needed. Suppose you get a *Temperature* called `t`, you may
-  access the Celcius degree by `t.C` as easily as you do Fahrenheit by `t.F`.
-- Namedtuples may have methods. For example, a *Pressure* has a method called
-  `altitude()`, which tells you how high you are above mean sea level.
-
-## DS18B20
-
-- Temperature, 1-wire
-- To find out the sensor's address:
-
-    ```
-    $ cd /sys/bus/w1/devices/
-    $ ls
-    28-XXXXXXXXXXXX  w1_bus_master1
-    ```
-
-Read the sensor as follows:
-
-```python
-from sensor import DS18B20
-
-ds = DS18B20('28-XXXXXXXXXXXX')
-t = ds.temperature()  # read temperature
-
-print(t)    # this is a namedtuple
-print(t.C)  # Celcius
-print(t.F)  # Fahrenheit
-print(t.K)  # Kelvin
 ```
 
-## BMP180
+or run example directly
 
-- Pressure + Temperature, I2C
-- Use `i2cdetect -y 1` to check address. It is probably `0x77`.
+```shell
+$> python3 example/PH_Read.py
 
-```python
-from sensor import BMP180
+```
+## Methods
 
-# I2C bus=1, Address=0x77
-bmp = BMP180(1, 0x77)
+```Python
 
-p = bmp.pressure()  # read pressure
-print(p)            # namedtuple
-print(p.hPa)        # hPa value
+"""
+@brief Init The Analog pH Sensor
+"""
+def begin(self);
 
-t = bmp.temperature()  # read temperature
-print(t)               # namedtuple
-print(t.C)             # Celcius degree
+"""
+@brief Convert voltage to PH
+"""
+def readPH(self,voltage);
 
-p, t = bmp.all()  # read both at once
-print(p)          # Pressure namedtuple
-print(t)          # Temperature namedtuple
+"""
+@brief Calibrate the calibration data
+"""
+def calibration(self,voltage);
 
-# Look up mean sea level pressure from local observatory.
-# 1009.1 hPa is only for example.
-a = p.altitude(msl=1009.1)
+"""
+@brief Reset the calibration data to default value
+"""
+def reset(self);
 
-print(a)     # Altitude
-print(a.m)   # in metre
-print(a.ft)  # in feet
 ```
 
-## HTU21D
+## Examples
+PH read => PH_Read.py
+in libs folder
 
-- Humidity + Temperature, I2C
-- Use `i2cdetect -y 1` to check address. It is probably `0x40`.
+> git clone https://github.com/DFRobot/DFRobot_ADS1115.git
+```Python
+import sys
+sys.path.insert(0,'libs/DFRobot_ADS1115/RaspberryPi/Python/')
+sys.path.insert(0,'libs/GreenPonik_PH_Python/src/')
 
-```python
-from sensor import HTU21D
 
-# I2C bus=1, Address=0x40
-htu = HTU21D(1, 0x40)
+from DFRobot_ADS1115 import ADS1115
+from GreenPonik_PH import GreenPonik_PH
 
-h = htu.humidity()  # read humidity
-print(h)            # namedtuple
-print(h.RH)         # relative humidity
+ADS1115_REG_CONFIG_PGA_6_144V = 0x00  # 6.144V range = Gain 2/3
+ADS1115_REG_CONFIG_PGA_4_096V = 0x02  # 4.096V range = Gain 1
+ADS1115_REG_CONFIG_PGA_2_048V = 0x04  # 2.048V range = Gain 2 (default)
+ADS1115_REG_CONFIG_PGA_1_024V = 0x06  # 1.024V range = Gain 4
+ADS1115_REG_CONFIG_PGA_0_512V = 0x08  # 0.512V range = Gain 8
+ADS1115_REG_CONFIG_PGA_0_256V = 0x0A  # 0.256V range = Gain 16
 
-t = htu.temperature()  # read temperature
-print(t)               # namedtuple
-print(t.F)             # Fahrenheit
+ads1115 = ADS1115()
+ph = GreenPonik_PH()
+ph.begin()
 
-h, t = htu.all()  # read both at once
+
+def read_ph():
+    global ads1115
+    global ph
+    # Set the IIC address
+    ads1115.setAddr_ADS1115(0x48)
+    # Sets the gain and input voltage range.
+    ads1115.setGain(ADS1115_REG_CONFIG_PGA_6_144V)
+    # Get the Digital Value of Analog of selected channel
+    adc1 = ads1115.readVoltage(1)
+    # Convert voltage to pH
+    PH = ph.readPH(adc1['r'])
+    print("PH:%.2f " % (PH))
+    return PH
+
+
+while True:
+    read_ph()
 ```
 
-## SHT20
+pH calibration => PH_Calibration.py
 
-- Humidity + Temperature, I2C
-- Use `i2cdetect -y 1` to check address. It is probably `0x40`.
+in libs folder
 
-```python
-from sensor import SHT20
+> git clone https://github.com/DFRobot/DFRobot_ADS1115.git
+```Python
+import sys
+sys.path.insert(0,'libs/DFRobot_ADS1115/RaspberryPi/Python/')
+sys.path.insert(0,'libs/GreenPonik_PH_Python/src/')
 
-# I2C bus=1, Address=0x40
-sht = SHT20(1, 0x40)
+from DFRobot_ADS1115 import ADS1115
+from GreenPonik_PH import GreenPonik_PH
 
-h = sht.humidity()  # read humidity
-print(h)            # namedtuple
-print(h.RH)         # relative humidity
+ADS1115_REG_CONFIG_PGA_6_144V = 0x00  # 6.144V range = Gain 2/3
+ADS1115_REG_CONFIG_PGA_4_096V = 0x02  # 4.096V range = Gain 1
+ADS1115_REG_CONFIG_PGA_2_048V = 0x04  # 2.048V range = Gain 2 (default)
+ADS1115_REG_CONFIG_PGA_1_024V = 0x06  # 1.024V range = Gain 4
+ADS1115_REG_CONFIG_PGA_0_512V = 0x08  # 0.512V range = Gain 8
+ADS1115_REG_CONFIG_PGA_0_256V = 0x0A  # 0.256V range = Gain 16
 
-t = sht.temperature()  # read temperature
-print(t)               # namedtuple
-print(t.C)             # Celsius
+ads1115 = ADS1115()
+ph = GreenPonik_PH()
+ph.begin()
 
-h, t = sht.all()  # read both at once
+
+def calibration():
+    global ads1115
+    global ph
+    # Set the IIC address
+    ads1115.setAddr_ADS1115(0x48)
+    # Sets the gain and input voltage range.
+    ads1115.setGain(ADS1115_REG_CONFIG_PGA_6_144V)
+    # Get the Digital Value of Analog of selected channel
+    adc1 = ads1115.readVoltage(1)
+    return ph.calibration(adc1['r'])
+
+
+calibration()
+
 ```
 
-## MCP3004
+read both pH and EC => PH_EC.py
 
-- Analog sensors (e.g. photoresistor) cannot interface with Raspberry Pi
-  directly. They have to go through an A/D converter.
+in libs folder
 
-```python
-from sensor import MCP3004
+> git clone https://github.com/GreenPonik/GreenPonik_EC_Python.git
 
-# SPI bus=0, CS=0, V_ref=3.3V
-mcp = MCP3004(bus=0, addr=0, vref=3.3)
+> git clone https://github.com/DFRobot/DFRobot_ADS1115.git
 
-mcp.voltage(0)  # read voltage on channel 0
+```Python
+import sys
+sys.path.insert(0,'libs/DFRobot_ADS1115/RaspberryPi/Python/')
+sys.path.insert(0,'libs/GreenPonik_EC_Python/src/')
+sys.path.insert(0,'libs/GreenPonik_PH_Python/src/')
+
+
+ADS1115_REG_CONFIG_PGA_6_144V        = 0x00 # 6.144V range = Gain 2/3
+ADS1115_REG_CONFIG_PGA_4_096V        = 0x02 # 4.096V range = Gain 1
+ADS1115_REG_CONFIG_PGA_2_048V        = 0x04 # 2.048V range = Gain 2 (default)
+ADS1115_REG_CONFIG_PGA_1_024V        = 0x06 # 1.024V range = Gain 4
+ADS1115_REG_CONFIG_PGA_0_512V        = 0x08 # 0.512V range = Gain 8
+ADS1115_REG_CONFIG_PGA_0_256V        = 0x0A # 0.256V range = Gain 16
+
+from DFRobot_ADS1115 import ADS1115
+from GreenPonik_EC import GreenPonik_EC
+from GreenPonik_PH import GreenPonik_PH
+
+ads1115 = ADS1115()
+ec      = GreenPonik_EC()
+ph      = GreenPonik_PH()
+
+ec.begin()
+ph.begin()
+
+
+def read_ph_ec():
+	global ads1115
+	global ec
+	global ph
+	temperature = 25 # or make your own temperature read process
+	#Set the IIC address
+	ads1115.setAddr_ADS1115(0x48)
+	#Sets the gain and input voltage range.
+	ads1115.setGain(ADS1115_REG_CONFIG_PGA_6_144V)
+	#Get the Digital Value of Analog of selected channel
+	adc0 = ads1115.readVoltage(0)
+	adc1 = ads1115.readVoltage(1)
+	#Convert voltage to EC with temperature compensation
+	EC = ec.readEC(adc0['r'],temperature)
+	PH = ph.readPH(adc1['r'])
+	print("Temperature:%.1f ^C EC:%.2f ms/cm PH:%.2f " %(temperature,EC,PH))
+	return temperature, EC, PH
+
+
+while True:
+	read_ph_ec()
 ```
+
+## Credits
+Writter by Mickael Lehoux, from [GreenPonik](https://www.greenponik.com), 2019
+
+based on [DFRobot library](https://github.com/DFRobot/DFRobot_PH/tree/master/RaspberryPi/Python)
+
+## support us
+[become a patreon](https://www.patreon.com/bePatron?u=32614023)
